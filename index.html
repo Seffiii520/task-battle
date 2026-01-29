@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>タスク管理対戦サイト</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family: sans-serif; margin: 10px; }
+button { padding: 10px; margin: 5px; }
+.task { display:flex; align-items:center; margin:5px 0; }
+.hidden { display:none; }
+</style>
+</head>
+
+<body>
+
+<div id="select">
+  <h2>アカウント選択</h2>
+  <button onclick="login('ryu')">りゅう</button>
+  <button onclick="login('sashi')">サシ</button>
+</div>
+
+<div id="home" class="hidden">
+  <button onclick="toggleScore()">📊 スコアを見る</button>
+
+  <div id="score" class="hidden">
+    <p>りゅう 合計: <span id="ryuTotal">0</span> 点</p>
+    <p>サシ 合計: <span id="sashiTotal">0</span> 点</p>
+    <canvas id="chart"></canvas>
+  </div>
+
+  <h3 id="today"></h3>
+  <div id="tasks"></div>
+  <button onclick="save()">保存</button>
+</div>
+
+<script>
+const tasks = [
+ "8時間寝る","運動","起きてから水を飲む",
+ "知りたいことを勉強する","ファーストフードを食べない",
+ "健康的な食事を1回する","スキンケア"
+];
+
+let user="", chart;
+
+function login(u){
+ user=u;
+ document.getElementById("select").classList.add("hidden");
+ document.getElementById("home").classList.remove("hidden");
+ document.getElementById("today").innerText = "今日: " + new Date().toLocaleDateString();
+ const box=document.getElementById("tasks");
+ box.innerHTML="";
+ tasks.forEach((t,i)=>{
+  box.innerHTML+=`<div class="task"><input type="checkbox" id="t${i}"> ${t}</div>`;
+ });
+ update();
+}
+
+function calc(n){
+ if(n===0) return 0;
+ if(n<=2) return 1;
+ if(n===4) return 3;
+ if(n===5) return 4;
+ return 5;
+}
+
+function save(){
+ const count=[...document.querySelectorAll("input")].filter(c=>c.checked).length;
+ const add=calc(count);
+ const data=JSON.parse(localStorage.getItem(user)||"[]");
+ data.push(add);
+ localStorage.setItem(user,JSON.stringify(data));
+ update();
+ alert("保存しました");
+}
+
+function update(){
+ const r=JSON.parse(localStorage.getItem("ryu")||"[]").reduce((a,b)=>a+b,0);
+ const s=JSON.parse(localStorage.getItem("sashi")||"[]").reduce((a,b)=>a+b,0);
+ ryuTotal.innerText=r;
+ sashiTotal.innerText=s;
+ draw();
+}
+
+function toggleScore(){
+ document.getElementById("score").classList.toggle("hidden");
+}
+
+function draw(){
+ const ctx=document.getElementById("chart");
+ if(chart) chart.destroy();
+ chart=new Chart(ctx,{
+  type:"line",
+  data:{
+   labels:[...Array(32).keys()],
+   datasets:[
+    {label:"りゅう",data:JSON.parse(localStorage.getItem("ryu")||"[]")},
+    {label:"サシ",data:JSON.parse(localStorage.getItem("sashi")||"[]")}
+   ]
+  }
+ });
+}
+</script>
+
+</body>
+</html>
